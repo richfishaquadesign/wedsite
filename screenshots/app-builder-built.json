@@ -1,0 +1,40 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "RF Aquarium",
+      "hasCanvas": false,
+      "bodyTextLen": 3774,
+      "bodyTextHash": "3c9206164140a7339fdf7914ea58946d764db48889850bb6fee92795e14a75ac",
+      "bodyTextPrefix": "Đi tới nội dung AQUA DESIGN Kho hàng Quy trình Bảng giá Hộp đơn ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "RF Aquarium",
+      "hasCanvas": false,
+      "bodyTextLen": 3712,
+      "bodyTextHash": "079fd4e7d422392f9502886c4227dff14bb199f63ce6819b0cc19ac7eada88eb",
+      "bodyTextPrefix": "Đi tới nội dung 0 sản phẩm trong giỏ Mở menu −10% XanhDeal · một",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": true,
+  "baselineReasons": [
+    "mobile: body text replaced (similar length, page start changed)"
+  ]
+}

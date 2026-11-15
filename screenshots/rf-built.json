@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "RF Aqua Design",
+      "hasCanvas": false,
+      "bodyTextLen": 2073,
+      "bodyTextHash": "173a2ea4fe022f2309822e710ab0637cdee1667c850c0d425ef670a7a2a3c456",
+      "bodyTextPrefix": "Đến nội dung AQUA DESIGN Trang chủ Bộ sưu tập Blog Thủy Sinh Về ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/rf-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "RF Aqua Design",
+      "hasCanvas": false,
+      "bodyTextLen": 2018,
+      "bodyTextHash": "3c0215a335cb9379fd44ac06449be28b655ca4f7e2f037159ff59ab1ad59822a",
+      "bodyTextPrefix": "Đến nội dung AQUA DESIGN ☰ AQUASCAPE · HANDCRAFTED IN VIETNAM Mộ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/rf-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/rf-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}
