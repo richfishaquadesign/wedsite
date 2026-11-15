@@ -885,9 +885,13 @@ function RFStudioAdmin() {
                     [
                       ["Tiêu đề khối", "title"],
                       ["Shopee URL", "shopeeUrl"],
-                      ["TikTok Shop URL", "tiktokUrl"],
-                      ["Zalo OA URL", "zaloUrl"],
+                      ["Ảnh banner Shopee", "shopeeImage"],
                       ["Pinterest URL", "pinterestUrl"],
+                      ["Ảnh banner Pinterest", "pinterestImage"],
+                      ["TikTok Shop URL", "tiktokUrl"],
+                      ["Ảnh banner TikTok Shop", "tiktokImage"],
+                      ["Zalo OA URL", "zaloUrl"],
+                      ["Ảnh banner Zalo OA", "zaloImage"],
                     ] as const
                   ).map(([lbl, key]) => (
                     <div key={key} className="space-y-1">

@@ -68,6 +68,10 @@ export interface ThemeConfig {
     tiktokUrl: string;
     zaloUrl: string;
     pinterestUrl: string;
+    shopeeImage: string;
+    pinterestImage: string;
+    tiktokImage: string;
+    zaloImage: string;
   };
 
   story: {
@@ -188,6 +192,13 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
     tiktokUrl: "https://tiktok.com",
     zaloUrl: "https://zalo.me/1393615274620008533",
     pinterestUrl: "https://pinterest.com",
+    shopeeImage:
+      "https://cdn-kvweb.citigo.net/merchant/63f2bd09e2d1172661bb241e25289076/cropped/1773992465/banner-phu-1.webp",
+    pinterestImage:
+      "https://cdn-kvweb.citigo.net/merchant/63f2bd09e2d1172661bb241e25289076/cropped/1773992560/banner-phu-2.webp",
+    tiktokImage:
+      "https://cdn-kvweb.citigo.net/merchant/63f2bd09e2d1172661bb241e25289076/cropped/1773992590/banner-phu-3.webp",
+    zaloImage: "",
   },
 
   story: {
@@ -283,8 +294,8 @@ export function saveThemeConfig(config: ThemeConfig) {
   window.dispatchEvent(new CustomEvent("rf-theme-updated", { detail: config }));
 }
 
-export const REMOTE_THEME_DOC_ID = "SYS_ANNO_WEBSITE_THEME_V2";
-export const REMOTE_THEME_CATEGORY = "THONG_BAO_HE_THONG";
+export const REMOTE_THEME_DOC_ID = "RF_WEB_THEME_CFG_V2";
+export const REMOTE_THEME_CATEGORY = "WEBSITE_CONFIG_INTERNAL";
 
 const cleanUrl = SUPABASE_URL.replace(/[\uFEFF\r\n\t ]/g, "");
 const cleanKey = SUPABASE_KEY.replace(/[\uFEFF\r\n\t ]/g, "");

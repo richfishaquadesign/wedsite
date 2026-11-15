@@ -171,46 +171,64 @@ function Home() {
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <a
-              href={theme.ecommerceChannels.shopeeUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-[#ee4d2d] text-white p-4 rounded-lg flex flex-col items-center justify-center text-center shadow transition hover:opacity-95"
-            >
-              <span className="text-2xl mb-1">🛍️</span>
-              <strong className="text-sm">Shopee Mall</strong>
-              <small className="text-white/80 text-xs">Richfish Aquarium</small>
-            </a>
-            <a
-              href={theme.ecommerceChannels.pinterestUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-[#bd081c] text-white p-4 rounded-lg flex flex-col items-center justify-center text-center shadow transition hover:opacity-95"
-            >
-              <span className="text-2xl mb-1">📌</span>
-              <strong className="text-sm">Pinterest</strong>
-              <small className="text-white/80 text-xs">Bộ sưu tập Layout</small>
-            </a>
-            <a
-              href={theme.ecommerceChannels.tiktokUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-[#050505] border border-white/20 text-white p-4 rounded-lg flex flex-col items-center justify-center text-center shadow transition hover:border-[#00b8c4]"
-            >
-              <span className="text-2xl mb-1">🎵</span>
-              <strong className="text-sm">TikTok Shop</strong>
-              <small className="text-white/80 text-xs">Live & Video xưởng</small>
-            </a>
-            <a
-              href={theme.ecommerceChannels.zaloUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-[#0068ff] text-white p-4 rounded-lg flex flex-col items-center justify-center text-center shadow transition hover:opacity-95"
-            >
-              <span className="text-2xl mb-1">💬</span>
-              <strong className="text-sm">Zalo OA</strong>
-              <small className="text-white/80 text-xs">Tư vấn báo giá trực tiếp</small>
-            </a>
+            {[
+              {
+                href: theme.ecommerceChannels.shopeeUrl,
+                image: theme.ecommerceChannels.shopeeImage,
+                title: "Shopee Mall",
+                subtitle: "Richfish Aquarium",
+                bgClass: "bg-[#ee4d2d]",
+                icon: "🛍️",
+              },
+              {
+                href: theme.ecommerceChannels.pinterestUrl,
+                image: theme.ecommerceChannels.pinterestImage,
+                title: "Pinterest",
+                subtitle: "Bộ sưu tập Layout",
+                bgClass: "bg-[#bd081c]",
+                icon: "📌",
+              },
+              {
+                href: theme.ecommerceChannels.tiktokUrl,
+                image: theme.ecommerceChannels.tiktokImage,
+                title: "TikTok Shop",
+                subtitle: "Live & Video xưởng",
+                bgClass: "bg-[#050505] border border-white/20",
+                icon: "🎵",
+              },
+              {
+                href: theme.ecommerceChannels.zaloUrl,
+                image: theme.ecommerceChannels.zaloImage,
+                title: "Zalo OA",
+                subtitle: "Tư vấn báo giá trực tiếp",
+                bgClass: "bg-[#0068ff]",
+                icon: "💬",
+              },
+            ].map((ch) => (
+              <a
+                key={ch.title}
+                href={ch.href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${ch.title} — ${ch.subtitle}`}
+                className={`${ch.image ? "bg-[#0a0a0a] border border-white/15" : ch.bgClass} aspect-[2/1] rounded-lg overflow-hidden flex flex-col items-center justify-center text-center text-white shadow transition hover:opacity-95 hover:border-[#00b8c4]`}
+              >
+                {ch.image ? (
+                  <img
+                    src={ch.image}
+                    alt={`${ch.title} - ${ch.subtitle}`}
+                    className="w-full h-full object-cover block"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="p-3 flex flex-col items-center justify-center">
+                    <span className="text-2xl mb-1">{ch.icon}</span>
+                    <strong className="text-sm">{ch.title}</strong>
+                    <small className="text-white/80 text-xs">{ch.subtitle}</small>
+                  </div>
+                )}
+              </a>
+            ))}
           </div>
         </section>
       )}
