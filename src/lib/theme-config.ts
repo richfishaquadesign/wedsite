@@ -286,14 +286,17 @@ export function saveThemeConfig(config: ThemeConfig) {
 export const REMOTE_THEME_DOC_ID = "SYS_ANNO_WEBSITE_THEME_V2";
 export const REMOTE_THEME_CATEGORY = "THONG_BAO_HE_THONG";
 
+const cleanUrl = SUPABASE_URL.replace(/[\uFEFF\r\n\t ]/g, "");
+const cleanKey = SUPABASE_KEY.replace(/[\uFEFF\r\n\t ]/g, "");
+
 export async function fetchRemoteThemeConfig(): Promise<ThemeConfig | null> {
   try {
-    const endpoint = `${SUPABASE_URL}/rest/v1/Documents?id=eq.${encodeURIComponent(REMOTE_THEME_DOC_ID)}&select=id,description,createdAt&limit=1`;
+    const endpoint = `${cleanUrl}/rest/v1/Documents?id=eq.${encodeURIComponent(REMOTE_THEME_DOC_ID)}&select=id,description,createdAt&limit=1`;
     const res = await fetch(endpoint, {
       method: "GET",
       headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: cleanKey,
+        Authorization: `Bearer ${cleanKey}`,
       },
       cache: "no-store",
     });
@@ -318,7 +321,7 @@ export async function publishThemeConfig(config: ThemeConfig): Promise<boolean> 
   saveThemeConfig(normalized);
   if (typeof window === "undefined") return true;
   try {
-    const endpoint = `${SUPABASE_URL}/rest/v1/Documents?on_conflict=id`;
+    const endpoint = `${cleanUrl}/rest/v1/Documents?on_conflict=id`;
     const row = {
       id: REMOTE_THEME_DOC_ID,
       category: REMOTE_THEME_CATEGORY,
@@ -330,8 +333,8 @@ export async function publishThemeConfig(config: ThemeConfig): Promise<boolean> 
     const res = await fetch(endpoint, {
       method: "POST",
       headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: cleanKey,
+        Authorization: `Bearer ${cleanKey}`,
         "Content-Type": "application/json",
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
