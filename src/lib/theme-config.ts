@@ -1,3 +1,5 @@
+import { key as SUPABASE_KEY, url as SUPABASE_URL } from "@/utils/supabase/config";
+
 export interface ThemeConfig {
   version: number;
   primaryColor: string;
@@ -281,42 +283,64 @@ export function saveThemeConfig(config: ThemeConfig) {
   window.dispatchEvent(new CustomEvent("rf-theme-updated", { detail: config }));
 }
 
-export const GAS_THEME_ENDPOINT = "https://script.google.com/macros/s/AKfycbytd9c_FzcqJ_65nqNI-xplYVRD3gstZcIL6PBk34P81XdSqXTNcRWsYt5bbeqjg66N/exec";
+export const REMOTE_THEME_DOC_ID = "SYS_ANNO_WEBSITE_THEME_V2";
+export const REMOTE_THEME_CATEGORY = "THONG_BAO_HE_THONG";
 
 export async function fetchRemoteThemeConfig(): Promise<ThemeConfig | null> {
-  if (typeof window === "undefined") return null;
   try {
-    const res = await fetch(`${GAS_THEME_ENDPOINT}?action=rfWebsiteGetTheme`, {
+    const endpoint = `${SUPABASE_URL}/rest/v1/Documents?id=eq.${encodeURIComponent(REMOTE_THEME_DOC_ID)}&select=id,description,createdAt&limit=1`;
+    const res = await fetch(endpoint, {
       method: "GET",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
       cache: "no-store",
     });
     if (!res.ok) return null;
-    const remote = await res.json();
-    if (remote && remote.version) {
-      const config = normalizeTheme(remote);
+    const rows = (await res.json()) as Array<{ id?: string; description?: string }>;
+    const rawDesc = rows?.[0]?.description;
+    if (!rawDesc) return null;
+    const parsed = JSON.parse(rawDesc);
+    if (parsed && typeof parsed === "object" && parsed.hero && parsed.categories) {
+      const config = normalizeTheme(parsed);
       saveThemeConfig(config);
       return config;
     }
   } catch (err) {
-    // quiet fallback
+    console.warn("fetchRemoteThemeConfig failed:", err);
   }
   return null;
 }
 
 export async function publishThemeConfig(config: ThemeConfig): Promise<boolean> {
-  saveThemeConfig(config);
+  const normalized = normalizeTheme(config);
+  saveThemeConfig(normalized);
   if (typeof window === "undefined") return true;
   try {
-    const payload = JSON.stringify({
-      action: "rfWebsiteSaveTheme",
-      themeConfig: config,
-    });
-    await fetch(GAS_THEME_ENDPOINT, {
+    const endpoint = `${SUPABASE_URL}/rest/v1/Documents?on_conflict=id`;
+    const row = {
+      id: REMOTE_THEME_DOC_ID,
+      category: REMOTE_THEME_CATEGORY,
+      title: "RF Website Theme Config v2",
+      description: JSON.stringify(normalized),
+      createdAt: new Date().toISOString(),
+      createdBy: "RF Web Studio",
+    };
+    const res = await fetch(endpoint, {
       method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain" },
-      body: payload,
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(row),
     });
+    if (!res.ok) {
+      console.warn("publishThemeConfig Supabase error:", res.status);
+      return false;
+    }
     return true;
   } catch (err) {
     console.warn("publishThemeConfig remote failed:", err);

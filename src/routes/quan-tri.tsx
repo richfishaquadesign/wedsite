@@ -29,7 +29,9 @@ import {
 import { useShop } from "@/lib/store";
 import {
   DEFAULT_THEME_CONFIG,
+  fetchRemoteThemeConfig,
   loadThemeConfig,
+  publishThemeConfig,
   saveThemeConfig,
   type ThemeConfig,
 } from "@/lib/theme-config";
@@ -75,6 +77,7 @@ function RFStudioAdmin() {
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [config, setConfig] = useState<ThemeConfig>(() => loadThemeConfig());
   const [dirty, setDirty] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   // Real data from RF_KNOWLEDGE_OS + RF Workspace Pro
   const [vaultProducts, setVaultProducts] = useState<VaultProduct[]>([]);
@@ -109,6 +112,17 @@ function RFStudioAdmin() {
 
   useEffect(() => {
     setConfig(loadThemeConfig());
+    void fetchRemoteThemeConfig().then((remote) => {
+      if (remote) {
+        setConfig(remote);
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            { type: "rf-theme-preview", config: remote },
+            window.location.origin,
+          );
+        }
+      }
+    });
     refreshArticles();
     void loadVaultCatalog()
       .then((payload) => setVaultProducts(payload.products))
@@ -145,31 +159,45 @@ function RFStudioAdmin() {
     setConfig((prev) => {
       const next = updater(prev);
       saveThemeConfig(next);
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          { type: "rf-theme-preview", config: next },
+          window.location.origin,
+        );
+      }
       return next;
     });
     setDirty(true);
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.dispatchEvent(
-        new StorageEvent("storage", { key: "rf_theme_config_v2" }),
-      );
+  };
+
+  const handlePublish = async () => {
+    if (publishing) return;
+    setPublishing(true);
+    const ok = await publishThemeConfig(config);
+    setPublishing(false);
+    if (ok) {
+      setDirty(false);
+      if (iframeRef.current) {
+        iframeRef.current.src = "/?preview=1";
+      }
+      toast.success("Đã lưu và xuất bản giao diện lên Website (đồng bộ toàn hệ thống)!");
+    } else {
+      toast.error("Đã lưu tạm nhưng chưa đồng bộ được lên Supabase. Vui lòng thử lại.");
     }
   };
 
-  const handlePublish = () => {
-    saveThemeConfig(config);
-    setDirty(false);
-    if (iframeRef.current) {
-      iframeRef.current.src = "/";
-    }
-    toast.success("Đã lưu và áp dụng giao diện lên Website.");
-  };
-
-  const handleReset = () => {
-    saveThemeConfig(DEFAULT_THEME_CONFIG);
+  const handleReset = async () => {
+    setPublishing(true);
+    const ok = await publishThemeConfig(DEFAULT_THEME_CONFIG);
+    setPublishing(false);
     setConfig(DEFAULT_THEME_CONFIG);
-    setDirty(false);
-    if (iframeRef.current) iframeRef.current.src = "/";
-    toast.success("Đã khôi phục cấu hình giao diện mặc định.");
+    setDirty(!ok);
+    if (iframeRef.current) iframeRef.current.src = "/?preview=1";
+    toast.success(
+      ok
+        ? "Đã khôi phục và xuất bản giao diện mặc định."
+        : "Đã khôi phục cục bộ (chưa đồng bộ Supabase).",
+    );
   };
 
   const handleSyncWorkspace = async () => {
@@ -302,9 +330,9 @@ function RFStudioAdmin() {
         if (!parsed.hero || !parsed.categories) throw new Error("invalid");
         saveThemeConfig(parsed);
         setConfig(parsed);
-        setDirty(false);
-        if (iframeRef.current) iframeRef.current.src = "/";
-        toast.success("Đã nhập cấu hình JSON thành công.");
+        setDirty(true);
+        if (iframeRef.current) iframeRef.current.src = "/?preview=1";
+        toast.success("Đã nhập cấu hình JSON. Bấm 'Lưu & Xuất bản' để áp dụng lên Website.");
       } catch {
         toast.error("File JSON cấu hình không hợp lệ.");
       }
@@ -440,11 +468,12 @@ function RFStudioAdmin() {
           </Link>
           <button
             type="button"
-            onClick={handlePublish}
-            className="inline-flex items-center gap-1.5 rounded bg-neutral-950 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800"
+            onClick={() => void handlePublish()}
+            disabled={publishing}
+            className="inline-flex items-center gap-1.5 rounded bg-neutral-950 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
           >
             <Save className="h-3.5 w-3.5" />
-            {dirty ? "Lưu & Xuất bản *" : "Đã xuất bản"}
+            {publishing ? "Đang xuất bản..." : dirty ? "Lưu & Xuất bản *" : "Đã xuất bản"}
           </button>
         </div>
       </header>
@@ -1111,7 +1140,7 @@ function RFStudioAdmin() {
               <button
                 type="button"
                 onClick={() => {
-                  if (iframeRef.current) iframeRef.current.src = "/";
+                  if (iframeRef.current) iframeRef.current.src = "/?preview=1";
                 }}
                 className="inline-flex items-center gap-1 rounded border border-neutral-300 bg-white px-2.5 py-1 text-xs text-neutral-700 hover:bg-neutral-50"
               >
@@ -1128,7 +1157,7 @@ function RFStudioAdmin() {
               >
                 <iframe
                   ref={iframeRef}
-                  src="/"
+                  src="/?preview=1"
                   title="Xem trước website RF Aqua Design"
                   className="h-full w-full border-0 bg-black"
                 />

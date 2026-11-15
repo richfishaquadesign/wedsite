@@ -2,17 +2,31 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useArticles } from "@/lib/journal";
-import { loadThemeConfig, type ThemeConfig } from "@/lib/theme-config";
+import {
+  DEFAULT_THEME_CONFIG,
+  fetchRemoteThemeConfig,
+  loadThemeConfig,
+  type ThemeConfig,
+} from "@/lib/theme-config";
 
 export const Route = createFileRoute("/")({
+  loader: async () => await fetchRemoteThemeConfig(),
   component: Home,
 });
 
-function useLiveThemeConfig() {
-  const [theme, setTheme] = useState<ThemeConfig>(() => loadThemeConfig());
+function useLiveThemeConfig(initialRemote: ThemeConfig | null) {
+  const [theme, setTheme] = useState<ThemeConfig>(() => initialRemote ?? DEFAULT_THEME_CONFIG);
 
   useEffect(() => {
-    setTheme(loadThemeConfig());
+    const isPreview = new URLSearchParams(window.location.search).get("preview") === "1";
+    if (isPreview) {
+      setTheme(loadThemeConfig());
+    } else {
+      void fetchRemoteThemeConfig().then((remote) => {
+        if (remote) setTheme(remote);
+        else if (!initialRemote) setTheme(loadThemeConfig());
+      });
+    }
 
     const onUpdated = (e: Event) => {
       const customEvent = e as CustomEvent<ThemeConfig>;
@@ -20,21 +34,35 @@ function useLiveThemeConfig() {
       else setTheme(loadThemeConfig());
     };
 
-    const onStorage = () => setTheme(loadThemeConfig());
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === "rf-customizer-theme-v2") {
+        setTheme(loadThemeConfig());
+      }
+    };
+
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin === window.location.origin && e.data?.type === "rf-theme-preview" && e.data.config) {
+        setTheme(e.data.config as ThemeConfig);
+      }
+    };
+
     window.addEventListener("rf-theme-updated", onUpdated);
     window.addEventListener("storage", onStorage);
+    window.addEventListener("message", onMessage);
     return () => {
       window.removeEventListener("rf-theme-updated", onUpdated);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("message", onMessage);
     };
-  }, []);
+  }, [initialRemote]);
 
   return theme;
 }
 
 function Home() {
+  const initialRemote = Route.useLoaderData();
   const articles = useArticles();
-  const theme = useLiveThemeConfig();
+  const theme = useLiveThemeConfig(initialRemote);
   const featured = (articles ?? []).slice(0, 3);
 
   return (
