@@ -4,18 +4,27 @@ import {
   Copy,
   Download,
   Eye,
+  FileText,
   Image as ImageIcon,
   Layers,
   Monitor,
   Palette,
+  Plus,
   RefreshCw,
   RotateCcw,
   Save,
   Smartphone,
+  Trash2,
   Upload,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  getAdminArticles,
+  loadArticles,
+  saveAdminArticles,
+  type Article,
+} from "@/lib/journal";
 import { useShop } from "@/lib/store";
 import {
   DEFAULT_THEME_CONFIG,
@@ -30,7 +39,7 @@ export const Route = createFileRoute("/quan-tri")({
   component: RFStudioAdmin,
 });
 
-type StudioMode = "overview" | "customizer" | "media";
+type StudioMode = "overview" | "customizer" | "articles" | "media";
 
 type BlockId =
   | "style"
@@ -76,12 +85,26 @@ function RFStudioAdmin() {
   const [mediaQuery, setMediaQuery] = useState("");
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
+  // Articles / Blog editor state
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [adminSlugs, setAdminSlugs] = useState<Set<string>>(new Set());
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
 
+  const refreshArticles = () => {
+    const custom = getAdminArticles();
+    setAdminSlugs(new Set(custom.map((a) => a.slug)));
+    void loadArticles()
+      .then((list) => setArticles(list))
+      .catch(() => {});
+  };
+
   useEffect(() => {
     setConfig(loadThemeConfig());
+    refreshArticles();
     void loadVaultCatalog()
       .then((payload) => setVaultProducts(payload.products))
       .catch(() => {});
@@ -182,6 +205,8 @@ function RFStudioAdmin() {
         if (items[idx]) items[idx] = { ...items[idx], image: url };
         return { ...p, categories: { ...p.categories, items } };
       });
+    } else if (target === "article") {
+      setEditingArticle((prev) => (prev ? { ...prev, image: url } : prev));
     } else if (target.startsWith("gal:")) {
       const idx = Number(target.split(":")[1]);
       updateConfig((p) => {
@@ -205,6 +230,51 @@ function RFStudioAdmin() {
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+  };
+
+  const slugifyVi = (input: string) =>
+    input
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+  const startNewArticle = () => {
+    setEditingArticle({
+      slug: `bai-viet-${Date.now().toString().slice(-6)}`,
+      title: "",
+      category: "Kinh nghiệm thủy sinh",
+      image: "/images/rf/craft.png",
+      lede: "",
+      html: "<p></p>",
+      publishedAt: new Date().toISOString().slice(0, 10),
+    });
+  };
+
+  const handleSaveArticle = () => {
+    if (!editingArticle) return;
+    const title = editingArticle.title.trim();
+    const slug = (editingArticle.slug.trim() || slugifyVi(title)).toLowerCase();
+    if (!title || !slug) {
+      toast.error("Cần nhập tiêu đề và đường dẫn slug cho bài viết.");
+      return;
+    }
+    const clean: Article = { ...editingArticle, title, slug };
+    const existing = getAdminArticles().filter((a) => a.slug !== slug);
+    saveAdminArticles([clean, ...existing]);
+    refreshArticles();
+    setEditingArticle(clean);
+    toast.success(`Đã lưu bài viết "${title}".`);
+  };
+
+  const handleDeleteArticle = (slug: string) => {
+    const remaining = getAdminArticles().filter((a) => a.slug !== slug);
+    saveAdminArticles(remaining);
+    refreshArticles();
+    if (editingArticle?.slug === slug) setEditingArticle(null);
+    toast.success("Đã xóa bản chỉnh sửa bài viết.");
   };
 
   const handleExportJson = () => {
@@ -303,6 +373,7 @@ function RFStudioAdmin() {
             {(
               [
                 { id: "customizer", label: "Chỉnh giao diện", icon: Palette },
+                { id: "articles", label: `Bài viết (${articles.length})`, icon: FileText },
                 { id: "overview", label: "Tổng quan hệ thống", icon: Layers },
                 { id: "media", label: `Kho ảnh (${allVaultImages.length})`, icon: ImageIcon },
               ] as const
@@ -1062,7 +1133,219 @@ function RFStudioAdmin() {
         </div>
       )}
 
-      {/* MODE 3: VAULT MEDIA BROWSER */}
+      {/* MODE 3: ARTICLES / BLOG EDITOR */}
+      {mode === "articles" && (
+        <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-12">
+          <aside className="space-y-3 lg:col-span-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-neutral-950">
+                Danh sách bài viết ({articles.length})
+              </h2>
+              <button
+                type="button"
+                onClick={startNewArticle}
+                className="inline-flex items-center gap-1.5 rounded bg-neutral-950 px-3 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Viết bài mới
+              </button>
+            </div>
+            <div className="max-h-[72vh] space-y-2 overflow-y-auto pr-1">
+              {articles.map((art) => {
+                const isSelected = editingArticle?.slug === art.slug;
+                const isCustom = adminSlugs.has(art.slug);
+                return (
+                  <div
+                    key={art.slug}
+                    className={`flex items-start gap-3 rounded-lg border p-3 transition ${
+                      isSelected
+                        ? "border-neutral-950 bg-white shadow-xs"
+                        : "border-neutral-200 bg-white hover:border-neutral-300"
+                    }`}
+                  >
+                    <img
+                      src={art.image}
+                      alt={art.title}
+                      className="h-14 w-16 shrink-0 rounded object-cover bg-neutral-100"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => setEditingArticle(art)}
+                        className="block w-full text-left text-xs font-semibold text-neutral-950 hover:underline line-clamp-2"
+                      >
+                        {art.title}
+                      </button>
+                      <p className="mt-1 text-[11px] text-neutral-500">
+                        {art.category} · {art.publishedAt}
+                        {isCustom ? " · Đã chỉnh/tạo mới" : ""}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingArticle(art)}
+                          className="text-[11px] font-medium text-neutral-700 underline"
+                        >
+                          Chỉnh sửa
+                        </button>
+                        <Link
+                          to="/bai-viet/$slug"
+                          params={{ slug: art.slug }}
+                          className="text-[11px] text-neutral-500 underline"
+                        >
+                          Xem
+                        </Link>
+                        {isCustom ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteArticle(art.slug)}
+                            className="inline-flex items-center gap-0.5 text-[11px] text-red-600 hover:underline"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Xóa bản sửa
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+
+          <section className="rounded-lg border border-neutral-200 bg-white p-5 lg:col-span-7">
+            {!editingArticle ? (
+              <div className="flex h-64 flex-col items-center justify-center text-center text-neutral-500">
+                <FileText className="mb-2 h-8 w-8 text-neutral-300" />
+                <p className="text-sm font-medium text-neutral-700">
+                  Chọn một bài viết bên trái để chỉnh sửa hoặc bấm &ldquo;Viết bài mới&rdquo;.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+                  <h3 className="text-sm font-semibold text-neutral-950">
+                    {editingArticle.title || "Bài viết mới"}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleSaveArticle}
+                    className="inline-flex items-center gap-1.5 rounded bg-neutral-950 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Lưu bài viết
+                  </button>
+                </div>
+
+                {renderImageField("Ảnh đại diện bài viết", editingArticle.image, "article")}
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-neutral-600">Tiêu đề</label>
+                    <input
+                      type="text"
+                      value={editingArticle.title}
+                      onChange={(e) => {
+                        const title = e.target.value;
+                        setEditingArticle((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                title,
+                                slug: prev.slug.startsWith("bai-viet-")
+                                  ? slugifyVi(title) || prev.slug
+                                  : prev.slug,
+                              }
+                            : prev,
+                        );
+                      }}
+                      className="h-9 w-full rounded border border-neutral-300 px-2.5 text-xs font-medium"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-neutral-600">
+                      Đường dẫn (Slug)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingArticle.slug}
+                      onChange={(e) =>
+                        setEditingArticle((prev) =>
+                          prev ? { ...prev, slug: e.target.value } : prev,
+                        )
+                      }
+                      className="h-9 w-full rounded border border-neutral-300 px-2.5 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-neutral-600">Danh mục</label>
+                    <input
+                      type="text"
+                      value={editingArticle.category}
+                      onChange={(e) =>
+                        setEditingArticle((prev) =>
+                          prev ? { ...prev, category: e.target.value } : prev,
+                        )
+                      }
+                      className="h-9 w-full rounded border border-neutral-300 px-2.5 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-neutral-600">Ngày đăng</label>
+                    <input
+                      type="date"
+                      value={editingArticle.publishedAt}
+                      onChange={(e) =>
+                        setEditingArticle((prev) =>
+                          prev ? { ...prev, publishedAt: e.target.value } : prev,
+                        )
+                      }
+                      className="h-9 w-full rounded border border-neutral-300 px-2.5 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-neutral-600">
+                    Mô tả ngắn (Lede)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editingArticle.lede}
+                    onChange={(e) =>
+                      setEditingArticle((prev) =>
+                        prev ? { ...prev, lede: e.target.value } : prev,
+                      )
+                    }
+                    className="w-full rounded border border-neutral-300 p-2.5 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-neutral-600">
+                    Nội dung bài viết (HTML / văn bản)
+                  </label>
+                  <textarea
+                    rows={10}
+                    value={editingArticle.html}
+                    onChange={(e) =>
+                      setEditingArticle((prev) =>
+                        prev ? { ...prev, html: e.target.value } : prev,
+                      )
+                    }
+                    className="w-full rounded border border-neutral-300 p-2.5 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+        </main>
+      )}
+
+      {/* MODE 4: VAULT MEDIA BROWSER */}
       {mode === "media" && (
         <main className="mx-auto max-w-6xl space-y-4 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
