@@ -82,7 +82,7 @@ function CheckoutPage() {
             fulfillment,
           })
             .then((order) => {
-              void navigate({ to: "/workspace", search: { don: order.id } });
+              void navigate({ to: "/theo-doi-don-hang", search: { ma: order.id } });
             })
             .catch((reason: unknown) => {
               setError(reason instanceof Error ? reason.message : "Không tạo được đơn.");

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { FULFILLMENT_LABEL } from "@/lib/catalog";
 import { formatVnd, formatWhen } from "@/lib/format";
@@ -77,9 +77,6 @@ function TrackPage() {
                 ))}
               </ul>
             ) : null}
-            <p>
-              <Link to="/workspace">Mở hộp đơn xưởng</Link>
-            </p>
           </div>
         ) : null}
         {asked && !found ? (

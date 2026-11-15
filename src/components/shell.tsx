@@ -92,9 +92,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <a href="https://zalo.me/1393615274620008533" target="_blank" rel="noreferrer">
                 Zalo ↗
               </a>
-              <Link to="/workspace">Hộp đơn</Link>
-              <Link to="/ket-noi">Nối kho</Link>
-              <Link to="/quan-tri">Quản trị</Link>
             </div>
           </div>
           <div className="footer-bottom">

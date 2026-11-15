@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AdminGate } from "@/components/admin-gate";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -13,7 +14,11 @@ export const Route = createFileRoute("/workspace")({
   validateSearch: (search: Record<string, unknown>): WorkspaceSearch => ({
     don: typeof search.don === "string" ? search.don : undefined,
   }),
-  component: WorkspacePage,
+  component: () => (
+    <AdminGate>
+      <WorkspacePage />
+    </AdminGate>
+  ),
 });
 
 const syncLabel = {

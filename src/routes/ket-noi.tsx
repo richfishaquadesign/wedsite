@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminGate } from "@/components/admin-gate";
 import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { buttonClass } from "@/components/ui/button";
@@ -8,7 +9,11 @@ import { formatWhen } from "@/lib/format";
 import { useShop } from "@/lib/store";
 
 export const Route = createFileRoute("/ket-noi")({
-  component: ConnectPage,
+  component: () => (
+    <AdminGate>
+      <ConnectPage />
+    </AdminGate>
+  ),
 });
 
 const sample = {

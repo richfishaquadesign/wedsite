@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AdminGate } from "@/components/admin-gate";
 import {
   Check,
   Copy,
@@ -36,7 +37,11 @@ import { loadVaultCatalog, type VaultProduct } from "@/lib/vault-catalog";
 import { loadWorks } from "@/lib/works";
 
 export const Route = createFileRoute("/quan-tri")({
-  component: RFStudioAdmin,
+  component: () => (
+    <AdminGate>
+      <RFStudioAdmin />
+    </AdminGate>
+  ),
 });
 
 type StudioMode = "overview" | "customizer" | "articles" | "media";
