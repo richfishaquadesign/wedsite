@@ -198,7 +198,8 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
       "https://cdn-kvweb.citigo.net/merchant/63f2bd09e2d1172661bb241e25289076/cropped/1773992560/banner-phu-2.webp",
     tiktokImage:
       "https://cdn-kvweb.citigo.net/merchant/63f2bd09e2d1172661bb241e25289076/cropped/1773992590/banner-phu-3.webp",
-    zaloImage: "",
+    zaloImage:
+      "https://cdn-kvweb.citigo.net/merchant/63f2bd09e2d1172661bb241e25289076/cropped/1773993099/banner-phu-4.webp",
   },
 
   story: {
