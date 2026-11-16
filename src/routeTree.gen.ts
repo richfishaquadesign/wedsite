@@ -20,6 +20,7 @@ import { Route as KhoRouteImport } from './routes/kho'
 import { Route as QuanTriRouteImport } from './routes/quan-tri'
 import { Route as TheoDoiDonHangRouteImport } from './routes/theo-doi-don-hang'
 import { Route as TodosRouteImport } from './routes/todos'
+import { Route as TraCuuRouteImport } from './routes/tra-cuu'
 import { Route as VeChungToiRouteImport } from './routes/ve-chung-toi'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as BaiVietIndexRouteImport } from './routes/bai-viet.index'
@@ -83,6 +84,11 @@ const TodosRoute = TodosRouteImport.update({
   path: '/todos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TraCuuRoute = TraCuuRouteImport.update({
+  id: '/tra-cuu',
+  path: '/tra-cuu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VeChungToiRoute = VeChungToiRouteImport.update({
   id: '/ve-chung-toi',
   path: '/ve-chung-toi',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/quan-tri': typeof QuanTriRoute
   '/theo-doi-don-hang': typeof TheoDoiDonHangRoute
   '/todos': typeof TodosRoute
+  '/tra-cuu': typeof TraCuuRoute
   '/ve-chung-toi': typeof VeChungToiRoute
   '/workspace': typeof WorkspaceRoute
   '/bai-viet/$slug': typeof BaiVietSlugRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/quan-tri': typeof QuanTriRoute
   '/theo-doi-don-hang': typeof TheoDoiDonHangRoute
   '/todos': typeof TodosRoute
+  '/tra-cuu': typeof TraCuuRoute
   '/ve-chung-toi': typeof VeChungToiRoute
   '/workspace': typeof WorkspaceRoute
   '/bai-viet/$slug': typeof BaiVietSlugRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/quan-tri': typeof QuanTriRoute
   '/theo-doi-don-hang': typeof TheoDoiDonHangRoute
   '/todos': typeof TodosRoute
+  '/tra-cuu': typeof TraCuuRoute
   '/ve-chung-toi': typeof VeChungToiRoute
   '/workspace': typeof WorkspaceRoute
   '/bai-viet/$slug': typeof BaiVietSlugRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/quan-tri'
     | '/theo-doi-don-hang'
     | '/todos'
+    | '/tra-cuu'
     | '/ve-chung-toi'
     | '/workspace'
     | '/bai-viet/$slug'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/quan-tri'
     | '/theo-doi-don-hang'
     | '/todos'
+    | '/tra-cuu'
     | '/ve-chung-toi'
     | '/workspace'
     | '/bai-viet/$slug'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/quan-tri'
     | '/theo-doi-don-hang'
     | '/todos'
+    | '/tra-cuu'
     | '/ve-chung-toi'
     | '/workspace'
     | '/bai-viet/$slug'
@@ -251,6 +263,7 @@ export interface RootRouteChildren {
   QuanTriRoute: typeof QuanTriRoute
   TheoDoiDonHangRoute: typeof TheoDoiDonHangRoute
   TodosRoute: typeof TodosRoute
+  TraCuuRoute: typeof TraCuuRoute
   VeChungToiRoute: typeof VeChungToiRoute
   WorkspaceRoute: typeof WorkspaceRoute
   SanPhamSkuRoute: typeof SanPhamSkuRoute
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/todos'
       fullPath: '/todos'
       preLoaderRoute: typeof TodosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tra-cuu': {
+      id: '/tra-cuu'
+      path: '/tra-cuu'
+      fullPath: '/tra-cuu'
+      preLoaderRoute: typeof TraCuuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ve-chung-toi': {
@@ -426,6 +446,7 @@ const rootRouteChildren: RootRouteChildren = {
   QuanTriRoute: QuanTriRoute,
   TheoDoiDonHangRoute: TheoDoiDonHangRoute,
   TodosRoute: TodosRoute,
+  TraCuuRoute: TraCuuRoute,
   VeChungToiRoute: VeChungToiRoute,
   WorkspaceRoute: WorkspaceRoute,
   SanPhamSkuRoute: SanPhamSkuRoute,
