@@ -28,6 +28,9 @@ type CustomerNote = {
 
 type TrackOrderResponse = {
   success: boolean;
+  requirePhone?: boolean;
+  hasPhone?: boolean;
+  hasTrackingCode?: boolean;
   error?: string;
   orderId?: string;
   orderCode?: string;
@@ -84,6 +87,7 @@ export function OrderTrackingView({ initialCode = "" }: { initialCode?: string }
   const [localFallback, setLocalFallback] = useState<(typeof localOrders)[number] | null>(null);
 
   const [newNote, setNewNote] = useState("");
+  const [verifyToken, setVerifyToken] = useState("");
   const [sendingNote, setSendingNote] = useState(false);
   const [noteStatus, setNoteStatus] = useState("");
 
@@ -94,6 +98,7 @@ export function OrderTrackingView({ initialCode = "" }: { initialCode?: string }
       setLoading(true);
       setError("");
       setNoteStatus("");
+      setVerifyToken("");
       setLocalFallback(null);
       try {
         const res = await callTrackRpc<TrackOrderResponse>("rf_track_order", {
@@ -110,6 +115,9 @@ export function OrderTrackingView({ initialCode = "" }: { initialCode?: string }
           } else {
             setData(null);
             setError(res?.error || "Không tìm thấy đơn hàng.");
+            if (res?.requirePhone && typeof document !== "undefined") {
+              document.getElementById("phone-last4")?.focus();
+            }
           }
         } else {
           setData(res);
@@ -148,6 +156,11 @@ export function OrderTrackingView({ initialCode = "" }: { initialCode?: string }
     e.preventDefault();
     const trimmed = newNote.trim();
     if (!trimmed || !data?.orderId) return;
+    const effectiveToken = data.hasPhone ? phoneLast4.trim() : verifyToken.trim();
+    if (!data.hasPhone && !effectiveToken) {
+      setNoteStatus("Vui lòng nhập Tên tài khoản đặt hàng hoặc 4 ký tự cuối Mã Vận Đơn để xác thực.");
+      return;
+    }
     setSendingNote(true);
     setNoteStatus("");
     try {
@@ -156,6 +169,7 @@ export function OrderTrackingView({ initialCode = "" }: { initialCode?: string }
         {
           p_order_code: data.orderId,
           p_note: trimmed,
+          p_verify_token: effectiveToken,
         },
       );
       if (res?.success) {
@@ -227,7 +241,7 @@ export function OrderTrackingView({ initialCode = "" }: { initialCode?: string }
             </div>
             <div className="grid gap-1.5">
               <label htmlFor="phone-last4" className="text-xs uppercase tracking-[0.12em] text-[#b0b0b0]">
-                4 số cuối SĐT (tùy chọn)
+                4 số cuối SĐT (đơn Lẻ / Web)
               </label>
               <input
                 id="phone-last4"
@@ -440,26 +454,45 @@ export function OrderTrackingView({ initialCode = "" }: { initialCode?: string }
                   Gửi lời nhắn / Ghi chú trực tiếp cho xưởng
                 </h3>
                 <p className="text-xs text-[#b0b0b0] mt-1">
-                  Ghi chú của bạn sẽ hiển thị trực tiếp trên màn hình điều phối xưởng cho đến khi có nhân viên xác nhận đã đọc.
+                  {data.hasPhone
+                    ? "Đã xác thực qua SĐT đặt hàng. Tối đa 2 ghi chú chờ xử lý cùng lúc, giãn cách 3 phút/lần."
+                    : "Để tránh nhầm đơn, vui lòng xác nhận Tên tài khoản đặt hàng hoặc 4 ký tự cuối Mã Vận Đơn trước khi gửi."}
                 </p>
               </div>
 
-              <form onSubmit={handleSendNote} className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="text"
-                  maxLength={1000}
-                  placeholder="VD: Nhờ xưởng bọc kỹ phần ngọn lũa hoặc giao giờ hành chính..."
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  className="flex-1 min-h-[44px] rounded-[3px] border border-[#333333] bg-[#0a0a0a] px-4 py-2.5 text-sm text-white placeholder:text-[#666666] focus:outline-none focus-visible:outline-none focus:border-white transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={sendingNote || !newNote.trim()}
-                  className="button light shrink-0 focus-visible:!outline-white"
-                >
-                  {sendingNote ? "Đang gửi..." : "Gửi ghi chú"}
-                </button>
+              <form onSubmit={handleSendNote} className="space-y-3">
+                {!data.hasPhone ? (
+                  <div>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      required
+                      autoComplete="off"
+                      placeholder="Xác thực: Tên tài khoản đặt hàng hoặc 4 ký tự cuối Mã Vận Đơn"
+                      value={verifyToken}
+                      onChange={(e) => setVerifyToken(e.target.value)}
+                      className="w-full min-h-[42px] rounded-[3px] border border-[#333333] bg-[#0a0a0a] px-4 py-2 text-sm text-white placeholder:text-[#666666] focus:outline-none focus-visible:outline-none focus:border-white transition-colors"
+                    />
+                  </div>
+                ) : null}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    maxLength={500}
+                    placeholder="VD: Nhờ xưởng bọc kỹ phần ngọn lũa hoặc giao giờ hành chính..."
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    className="flex-1 min-h-[44px] rounded-[3px] border border-[#333333] bg-[#0a0a0a] px-4 py-2.5 text-sm text-white placeholder:text-[#666666] focus:outline-none focus-visible:outline-none focus:border-white transition-colors"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sendingNote || newNote.trim().length < 3 || (!data.hasPhone && !verifyToken.trim())}
+                    className="button light shrink-0 focus-visible:!outline-white"
+                  >
+                    {sendingNote ? "Đang gửi..." : "Gửi ghi chú"}
+                  </button>
+                </div>
               </form>
 
               {noteStatus ? <p className="text-xs text-[#d4d4d4]">{noteStatus}</p> : null}
